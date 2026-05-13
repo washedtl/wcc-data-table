@@ -1,0 +1,140 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "data-table",
+  "type": "registry:ui",
+  "title": "DataTable",
+  "description": "High-density virtualized React table with column reorder/resize/pin, saved views, find bar, density toggle, view-options menu (zebra/grid lines/compact/pin), URL share, and per-column filters. Extracted from the Washed Command Center SAS canonical table.",
+  "author": "Washed TL",
+  "dependencies": [
+    "@tanstack/react-table@^8.21.0",
+    "@tanstack/react-virtual@^3.13.0",
+    "@dnd-kit/core@^6.3.0",
+    "@dnd-kit/sortable@^10.0.0",
+    "@dnd-kit/utilities@^3.2.0",
+    "radix-ui@^1.4.0",
+    "class-variance-authority@^0.7.0",
+    "clsx@^2.1.0",
+    "lucide-react@>=0.400.0",
+    "tailwind-merge@^3.0.0"
+  ],
+  "files": [
+    {
+      "path": "src/components/data-table.tsx",
+      "target": "components/ui/data-table.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/find-bar.tsx",
+      "target": "components/ui/find-bar.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "target": "components/ui/button.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/checkbox.tsx",
+      "target": "components/ui/checkbox.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/context-menu.tsx",
+      "target": "components/ui/context-menu.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/dropdown-menu.tsx",
+      "target": "components/ui/dropdown-menu.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/empty-state.tsx",
+      "target": "components/ui/empty-state.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/popover.tsx",
+      "target": "components/ui/popover.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/segmented-control.tsx",
+      "target": "components/ui/segmented-control.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "target": "components/ui/sheet.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/skeleton.tsx",
+      "target": "components/ui/skeleton.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/components/ui/sparkline.tsx",
+      "target": "components/ui/sparkline.tsx",
+      "type": "registry:ui"
+    },
+    {
+      "path": "src/hooks/use-table-prefs.ts",
+      "target": "hooks/use-table-prefs.ts",
+      "type": "registry:hook"
+    },
+    {
+      "path": "src/hooks/cross-table-vis.ts",
+      "target": "hooks/cross-table-vis.ts",
+      "type": "registry:hook"
+    },
+    {
+      "path": "src/lib/cn.ts",
+      "target": "lib/cn.ts",
+      "type": "registry:lib"
+    },
+    {
+      "path": "src/lib/icons.tsx",
+      "target": "lib/icons.tsx",
+      "type": "registry:lib"
+    },
+    {
+      "path": "src/styles/data-table.css",
+      "target": "styles/data-table.css",
+      "type": "registry:style"
+    }
+  ],
+  "cssVars": {
+    "light": {
+      "bg":           "#FFFFFF",
+      "surface":      "#F7F7F8",
+      "surface-2":    "#EFEFF1",
+      "border":       "#E4E4E7",
+      "border-strong":"#D4D4D8",
+      "text":         "#0A0A0F",
+      "text-dim":     "#5A5E66",
+      "text-muted":   "#9EA1A8",
+      "accent":       "#2563EB",
+      "accent-fg":    "#FFFFFF",
+      "positive":     "#16A34A",
+      "warning":      "#F59E0B",
+      "negative":     "#DC2626"
+    },
+    "dark": {
+      "bg":           "#0D0D0F",
+      "surface":      "#17171A",
+      "surface-2":    "#1C1C20",
+      "border":       "#1A1A1E",
+      "border-strong":"#2A2A30",
+      "text":         "#EDEDF0",
+      "text-dim":     "#8B8B94",
+      "text-muted":   "#5A5E66",
+      "accent":       "#4AA8FF",
+      "accent-fg":    "#FFFFFF",
+      "positive":     "#2FCC71",
+      "warning":      "#FFB547",
+      "negative":     "#FF4D5E"
+    }
+  },
+  "docs": "https://github.com/<owner>/wcc-data-table#readme"
+}

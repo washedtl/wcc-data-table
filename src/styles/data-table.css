@@ -1,0 +1,101 @@
+/* wcc-data-table — design tokens + utility classes
+ *
+ * Drop this file into your global stylesheet (e.g. src/index.css):
+ *
+ *   @import "wcc-data-table/styles/data-table.css";
+ *
+ * Or, if you installed via the shadcn registry, the relevant blocks were
+ * appended to your globals.css automatically.
+ *
+ * All tokens are namespaced as CSS custom properties on :root. If your app
+ * already defines a token of the same name (e.g. --accent), your definition
+ * wins as long as it's loaded AFTER this file. To override one variable
+ * without losing the others, redeclare just that variable in your own
+ * stylesheet after the import.
+ */
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────────────────
+   * Three-layer dark surface stack:
+   *   --bg        = page body (darkest)
+   *   --surface   = table card / panel chrome
+   *   --surface-2 = lifted regions (toolbar band, popovers, sticky thead)
+   */
+  --bg:           #0D0D0F;
+  --surface:      #17171A;
+  --surface-2:    #1C1C20;
+
+  /* ── Borders ─────────────────────────────────────────────────────────
+   * --border        = hairlines between rows + most chrome
+   * --border-strong = stronger separator (sticky-left boundary, modals)
+   */
+  --border:        #1A1A1E;
+  --border-strong: #2A2A30;
+
+  /* ── Text ────────────────────────────────────────────────────────────
+   * --text       = primary readable text
+   * --text-dim   = secondary / labels (~55% brightness vs --text)
+   * --text-muted = tertiary / placeholder / icon rest-state
+   */
+  --text:         #EDEDF0;
+  --text-dim:     #8B8B94;
+  --text-muted:   #5A5E66;
+
+  /* ── Accent ──────────────────────────────────────────────────────────
+   * Single brand color. Used for: active sort, selected rows, focused
+   * keyboard cursor, primary buttons, hover-affordance underlines.
+   * Override --accent for instant rebrand; the *-dim/*-bd/*-fg variants
+   * recompute via color-mix.
+   */
+  --accent:       #4AA8FF;
+  --accent-dim:   color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-bd:    color-mix(in srgb, var(--accent) 30%, transparent);
+  --accent-fg:    #FFFFFF;
+
+  /* ── Status colors ───────────────────────────────────────────────────
+   * Used for cell tones (StatusChip) and the bulk-actions bar. Each has
+   * a *-dim variant via color-mix at the call site.
+   */
+  --positive:     #2FCC71;
+  --warning:      #FFB547;
+  --negative:     #FF4D5E;
+
+  /* ── Geometry ────────────────────────────────────────────────────────*/
+  --radius-sm:    6px;
+  --radius-md:    8px;
+  --radius-lg:    10px;
+
+  /* ── Typography ──────────────────────────────────────────────────────
+   * Optional display family for the saved-views sheet title. Falls back
+   * to system-ui if not set. Override if you have a brand font.
+   */
+  --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ── Utility: surface-raised ───────────────────────────────────────────
+ * The "lifted card" look on the DataTable wrapper. Top rim-light + a
+ * subtle contact shadow underneath. Combined with bg-[var(--surface)]
+ * this is what gives the table its "this is a tangible card" feel.
+ */
+.surface-raised {
+  box-shadow:
+    /* top rim-light — as if the room's light hits the edge */
+    inset 0 1px 0 color-mix(in srgb, white 5%, transparent),
+    /* thin contact line under the card (bottom edge kisses the bg) */
+    0 1px 0 rgba(0, 0, 0, 0.35),
+    /* softer ambient drop */
+    0 6px 16px -6px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Utility: surface-float ────────────────────────────────────────────
+ * Floating overlays — dropdown menus, popovers, the saved-views Sheet,
+ * the find-bar. Higher ambient shadow than surface-raised so the layer
+ * reads as overlapping the table rather than nested in it.
+ */
+.surface-float {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 6%, transparent),
+    0 1px 0 rgba(0, 0, 0, 0.35),
+    0 12px 28px -10px rgba(0, 0, 0, 0.55),
+    0 4px 10px -4px rgba(0, 0, 0, 0.4);
+}
