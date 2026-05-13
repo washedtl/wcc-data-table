@@ -1984,6 +1984,15 @@ function BodyRow<T>({
     <tr
       onClick={(e) => onRowClick(row.original as T, e)}
       onDoubleClick={onRowDoubleClick ? () => onRowDoubleClick(row.original as T) : undefined}
+      // Shift-click range-selects rows (see handleRowClick). The browser's
+      // default text-selection-from-anchor fires on mousedown BEFORE the
+      // click event lands, so without this preventDefault the row interaction
+      // is preceded by a blue text-selection sweep from the previous focus to
+      // the click point. Suppress that one specific case only — plain clicks
+      // still allow normal text selection inside cells (copy ASIN, etc.).
+      onMouseDown={(e) => {
+        if (e.shiftKey) e.preventDefault()
+      }}
       // onAuxClick fires for non-primary mouse buttons. Middle-click = button 1.
       onAuxClick={onRowMiddleClick ? (e) => {
         if (e.button === 1) {
