@@ -53,8 +53,11 @@ The CLI will:
    src/hooks/cross-table-vis.ts        → src/hooks/cross-table-vis.ts
    src/lib/cn.ts                       → src/lib/cn.ts
    src/lib/icons.tsx                   → src/lib/icons.tsx
-   src/styles/data-table.css           → src/styles/data-table.css
+   src/styles/data-table.css           → src/components/data-table.css
    ```
+   (Note: the shadcn registry treats `data-table.css` as a `registry:style`
+   item and lands it at `src/components/data-table.css` — match that for
+   consistency.)
 2. Install peer deps:
    ```bash
    npm install @tanstack/react-table @tanstack/react-virtual \
@@ -63,7 +66,8 @@ The CLI will:
    ```
 3. Import the tokens CSS once (in your `src/index.css` or equivalent):
    ```css
-   @import "./styles/data-table.css";
+   @import "tailwindcss";
+   @import "./components/data-table.css";
    ```
 4. Confirm your `tsconfig.json` has `"paths": { "@/*": ["./src/*"] }` (shadcn-standard).
 

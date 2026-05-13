@@ -1,15 +1,15 @@
-// src/lib/globalColVis.ts
-//
-// Cross-table column visibility sync. Toggling "Profit" in SAS batch also
-// toggles it in Keepa batch (and any other DataTable that opts in).
+// Cross-table column visibility sync. Toggling a column in one table also
+// toggles it in every other DataTable on the page that opts in via the
+// `syncColumnsByLabel` prop.
 //
 // Keyed by column LABEL — not ID — because the same semantic column may have
-// different IDs across tables (SAS: `buy`, Keepa: `buyPrice`, both labelled "Buy").
+// different IDs across tables (e.g. `buy` in one schema, `buyPrice` in
+// another, both labelled "Buy" — they sync together).
 //
-// Persisted in localStorage so preferences survive reloads. The DataTable
-// opt-in flag `syncColumnsByLabel` enables this behavior per table.
+// Persisted in localStorage so the preference survives reloads. Opt-in per
+// table; safe to ignore if you don't want cross-table sync.
 
-const STORAGE_KEY = 'boxedup.globalColVis.v1'
+const STORAGE_KEY = 'wcc.cross-table-vis.v1'
 
 type VisMap = Record<string, boolean>
 type Listener = (map: VisMap) => void
