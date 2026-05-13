@@ -963,6 +963,16 @@ export function DataTable<T>({
     if (tableRow) lastSelectedIdRef.current = tableRow.id
     if (detailRenderer) setDetailRow(row)
     else if (onRowClick) onRowClick(row)
+    else if (tableRow) {
+      // No detail target and no caller-defined click handler — fall back
+      // to selection toggle. This makes plain row-click consistent with
+      // the "active selection" branch above: clicking row 1 selects it,
+      // clicking row 2 adds row 2 to the selection, etc. Mirrors Linear
+      // / Notion table UX where clicking the row body == ticking the
+      // checkbox. Consumers that want click→navigate explicitly pass
+      // onRowClick or detailRenderer to opt out of this default.
+      tableRow.toggleSelected()
+    }
   }
   // Double-click: bypass the multi-select-toggle path so the user can open
   // detail even while a multi-select is active. Falls through to the normal
