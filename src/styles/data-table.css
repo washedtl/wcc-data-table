@@ -70,6 +70,83 @@
    * to system-ui if not set. Override if you have a brand font.
    */
   --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ── shadcn-token compatibility layer ────────────────────────────────
+   * The Radix/shadcn UI primitives shipped under src/components/ui/
+   * (dropdown-menu, popover, sheet, etc.) reference the standard shadcn
+   * token names — `bg-popover`, `text-muted-foreground`, `bg-accent`,
+   * `bg-destructive`, etc. Without these defined, Tailwind generates
+   * `background-color: ;` (empty) and menus render fully transparent.
+   *
+   * The mappings below alias each shadcn token to a WCC equivalent so
+   * the primitives Just Work. Override individually if your project
+   * already defines these (e.g. you're integrating into an existing
+   * shadcn app — your tokens win when loaded AFTER this file).
+   */
+  --background:           var(--bg);
+  --foreground:           var(--text);
+  --card:                 var(--surface);
+  --card-foreground:      var(--text);
+  --popover:              var(--surface);
+  --popover-foreground:   var(--text);
+  --primary:              var(--accent);
+  --primary-foreground:   var(--accent-fg);
+  --secondary:            var(--surface-2);
+  --secondary-foreground: var(--text);
+  --muted:                var(--surface-2);
+  --muted-foreground:     var(--text-muted);
+  /* Note: shadcn primitives use `bg-accent` for subtle hover states.
+   * WCC's --accent is the brand color (a strong blue/whatever), so the
+   * hover gets a bright tint. Override --accent post-import if you want
+   * the softer shadcn-default look. */
+  --accent-foreground:    var(--accent-fg);
+  --destructive:          var(--negative);
+  --destructive-foreground: #ffffff;
+  --input:                var(--border);
+  --ring:                 var(--accent-bd);
+  --radius:               var(--radius-md);
+}
+
+/* Tailwind v4 reads utility colors from `--color-<name>` (e.g. `bg-popover`
+ * resolves `--color-popover`, NOT `--popover`). The `@theme inline` block
+ * aliases each shadcn token under the prefix Tailwind expects, so the
+ * radix wrappers' `bg-popover` / `text-muted-foreground` etc. utilities
+ * actually generate the right background-color values.
+ *
+ * Without this block, every shadcn utility class falls back to nothing —
+ * which is why menus rendered fully transparent until 2026-05-13. */
+@theme inline {
+  --color-background:            var(--background);
+  --color-foreground:            var(--foreground);
+  --color-card:                  var(--card);
+  --color-card-foreground:       var(--card-foreground);
+  --color-popover:               var(--popover);
+  --color-popover-foreground:    var(--popover-foreground);
+  --color-primary:               var(--primary);
+  --color-primary-foreground:    var(--primary-foreground);
+  --color-secondary:             var(--secondary);
+  --color-secondary-foreground:  var(--secondary-foreground);
+  --color-muted:                 var(--muted);
+  --color-muted-foreground:      var(--muted-foreground);
+  --color-accent:                var(--accent);
+  --color-accent-foreground:     var(--accent-foreground);
+  --color-destructive:           var(--destructive);
+  --color-destructive-foreground:var(--destructive-foreground);
+  --color-border:                var(--border);
+  --color-input:                 var(--input);
+  --color-ring:                  var(--ring);
+}
+
+/* Tailwind v4 default: `border` utility resolves to `border-color:
+ * currentColor`, which means every shadcn `border` (no color suffix) class
+ * picks up the text color instead of the actual --border token. shadcn's
+ * own globals.css applies `* { @apply border-border }` to fix this.
+ * Replicating that rule here, scoped to the package's primitives so the
+ * consumer's other components are unaffected. */
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    border-color: var(--border);
+  }
 }
 
 /* ── Utility: surface-raised ───────────────────────────────────────────
