@@ -1,88 +1,40 @@
-/* wcc-data-table — design tokens + utility classes
+/* wcc-data-table — design tokens + utility classes + Tailwind v4 aliases
  *
- * Drop this file into your global stylesheet (e.g. src/index.css):
+ * If you installed via `npx shadcn add`, the cssVars from registry are already
+ * appended to your global CSS — this file is then just the utility classes.
  *
- *   @import "wcc-data-table/styles/data-table.css";
+ * If you installed manually, import this file from your global stylesheet:
  *
- * Or, if you installed via the shadcn registry, the relevant blocks were
- * appended to your globals.css automatically.
+ *   @import "tailwindcss";
+ *   @import "./components/data-table.css";
  *
- * All tokens are namespaced as CSS custom properties on :root. If your app
- * already defines a token of the same name (e.g. --accent), your definition
- * wins as long as it's loaded AFTER this file. To override one variable
- * without losing the others, redeclare just that variable in your own
- * stylesheet after the import.
+ * (shadcn drops this file at `src/components/data-table.css` by convention
+ *  for `registry:style` items.)
  */
 
 :root {
-  /* ── Surfaces ─────────────────────────────────────────────────────────
-   * Three-layer dark surface stack:
-   *   --bg        = page body (darkest)
-   *   --surface   = table card / panel chrome
-   *   --surface-2 = lifted regions (toolbar band, popovers, sticky thead)
-   */
+  /* ── WCC tokens — used directly by data-table.tsx ─────────────────── */
   --bg:           #0D0D0F;
   --surface:      #17171A;
   --surface-2:    #1C1C20;
-
-  /* ── Borders ─────────────────────────────────────────────────────────
-   * --border        = hairlines between rows + most chrome
-   * --border-strong = stronger separator (sticky-left boundary, modals)
-   */
-  --border:        #1A1A1E;
-  --border-strong: #2A2A30;
-
-  /* ── Text ────────────────────────────────────────────────────────────
-   * --text       = primary readable text
-   * --text-dim   = secondary / labels (~55% brightness vs --text)
-   * --text-muted = tertiary / placeholder / icon rest-state
-   */
+  --border:       #1A1A1E;
+  --border-strong:#2A2A30;
   --text:         #EDEDF0;
   --text-dim:     #8B8B94;
   --text-muted:   #5A5E66;
-
-  /* ── Accent ──────────────────────────────────────────────────────────
-   * Single brand color. Used for: active sort, selected rows, focused
-   * keyboard cursor, primary buttons, hover-affordance underlines.
-   * Override --accent for instant rebrand; the *-dim/*-bd/*-fg variants
-   * recompute via color-mix.
-   */
   --accent:       #4AA8FF;
   --accent-dim:   color-mix(in srgb, var(--accent) 12%, transparent);
   --accent-bd:    color-mix(in srgb, var(--accent) 30%, transparent);
   --accent-fg:    #FFFFFF;
-
-  /* ── Status colors ───────────────────────────────────────────────────
-   * Used for cell tones (StatusChip) and the bulk-actions bar. Each has
-   * a *-dim variant via color-mix at the call site.
-   */
   --positive:     #2FCC71;
   --warning:      #FFB547;
   --negative:     #FF4D5E;
-
-  /* ── Geometry ────────────────────────────────────────────────────────*/
   --radius-sm:    6px;
   --radius-md:    8px;
   --radius-lg:    10px;
-
-  /* ── Typography ──────────────────────────────────────────────────────
-   * Optional display family for the saved-views sheet title. Falls back
-   * to system-ui if not set. Override if you have a brand font.
-   */
   --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* ── shadcn-token compatibility layer ────────────────────────────────
-   * The Radix/shadcn UI primitives shipped under src/components/ui/
-   * (dropdown-menu, popover, sheet, etc.) reference the standard shadcn
-   * token names — `bg-popover`, `text-muted-foreground`, `bg-accent`,
-   * `bg-destructive`, etc. Without these defined, Tailwind generates
-   * `background-color: ;` (empty) and menus render fully transparent.
-   *
-   * The mappings below alias each shadcn token to a WCC equivalent so
-   * the primitives Just Work. Override individually if your project
-   * already defines these (e.g. you're integrating into an existing
-   * shadcn app — your tokens win when loaded AFTER this file).
-   */
+  /* ── shadcn-standard tokens — used by Radix/shadcn UI primitives ──── */
   --background:           var(--bg);
   --foreground:           var(--text);
   --card:                 var(--surface);
@@ -95,10 +47,6 @@
   --secondary-foreground: var(--text);
   --muted:                var(--surface-2);
   --muted-foreground:     var(--text-muted);
-  /* Note: shadcn primitives use `bg-accent` for subtle hover states.
-   * WCC's --accent is the brand color (a strong blue/whatever), so the
-   * hover gets a bright tint. Override --accent post-import if you want
-   * the softer shadcn-default look. */
   --accent-foreground:    var(--accent-fg);
   --destructive:          var(--negative);
   --destructive-foreground: #ffffff;
@@ -108,14 +56,18 @@
 }
 
 /* Tailwind v4 reads utility colors from `--color-<name>` (e.g. `bg-popover`
- * resolves `--color-popover`, NOT `--popover`). The `@theme inline` block
- * aliases each shadcn token under the prefix Tailwind expects, so the
- * radix wrappers' `bg-popover` / `text-muted-foreground` etc. utilities
- * actually generate the right background-color values.
- *
- * Without this block, every shadcn utility class falls back to nothing —
- * which is why menus rendered fully transparent until 2026-05-13. */
+ * resolves `--color-popover`, NOT `--popover`). Alias every token under the
+ * prefix Tailwind expects. Without this, every shadcn utility class falls
+ * back to nothing — that's why menus rendered transparent until 2026-05-13. */
 @theme inline {
+  --color-bg:                    var(--bg);
+  --color-surface:               var(--surface);
+  --color-surface-2:             var(--surface-2);
+  --color-border:                var(--border);
+  --color-border-strong:         var(--border-strong);
+  --color-text:                  var(--text);
+  --color-text-dim:              var(--text-dim);
+  --color-text-muted:            var(--text-muted);
   --color-background:            var(--background);
   --color-foreground:            var(--foreground);
   --color-card:                  var(--card);
@@ -132,42 +84,27 @@
   --color-accent-foreground:     var(--accent-foreground);
   --color-destructive:           var(--destructive);
   --color-destructive-foreground:var(--destructive-foreground);
-  --color-border:                var(--border);
   --color-input:                 var(--input);
   --color-ring:                  var(--ring);
-}
-
-/* Tailwind v4 default: `border` utility resolves to `border-color:
- * currentColor`, which means every shadcn `border` (no color suffix) class
- * picks up the text color instead of the actual --border token. shadcn's
- * own globals.css applies `* { @apply border-border }` to fix this.
- * Replicating that rule here, scoped to the package's primitives so the
- * consumer's other components are unaffected. */
-@layer base {
-  *, ::after, ::before, ::backdrop, ::file-selector-button {
-    border-color: var(--border);
-  }
+  --color-positive:              var(--positive);
+  --color-warning:               var(--warning);
+  --color-negative:              var(--negative);
 }
 
 /* ── Utility: surface-raised ───────────────────────────────────────────
  * The "lifted card" look on the DataTable wrapper. Top rim-light + a
- * subtle contact shadow underneath. Combined with bg-[var(--surface)]
- * this is what gives the table its "this is a tangible card" feel.
+ * subtle contact shadow underneath.
  */
 .surface-raised {
   box-shadow:
-    /* top rim-light — as if the room's light hits the edge */
     inset 0 1px 0 color-mix(in srgb, white 5%, transparent),
-    /* thin contact line under the card (bottom edge kisses the bg) */
     0 1px 0 rgba(0, 0, 0, 0.35),
-    /* softer ambient drop */
     0 6px 16px -6px rgba(0, 0, 0, 0.45);
 }
 
 /* ── Utility: surface-float ────────────────────────────────────────────
  * Floating overlays — dropdown menus, popovers, the saved-views Sheet,
- * the find-bar. Higher ambient shadow than surface-raised so the layer
- * reads as overlapping the table rather than nested in it.
+ * the find-bar. Higher ambient shadow than surface-raised.
  */
 .surface-float {
   box-shadow:

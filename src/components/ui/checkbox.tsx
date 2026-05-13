@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn"
 
 const checkboxVariants = cva(
   cn(
-    "peer shrink-0 rounded-[4px] border shadow-xs outline-none",
+    "peer shrink-0 rounded-[4px] border border-border shadow-xs outline-none",
     "transition-[background,border-color,box-shadow,transform] duration-150",
     "focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--check-color)_35%,transparent)]",
     "disabled:cursor-not-allowed disabled:opacity-40",
