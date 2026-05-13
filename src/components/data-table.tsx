@@ -85,6 +85,7 @@ import {
   IcoRotateCcw,
   IcoEye,
   IcoLink,
+  IcoMoreH,
 } from '@/lib/icons'
 import { useTablePrefs, encodeTablePrefs, type TableDensity, type SavedView, type ViewOptions } from '@/hooks/use-table-prefs'
 
@@ -386,6 +387,20 @@ export interface DataTableProps<T> {
    *  the toolbar. The toggle states are persisted in `prefs.viewOptions` and
    *  round-trip with saved views. Default true. */
   showViewOptions?: boolean
+  /** Optional menu items rendered inside a "More" dropdown trigger in the
+   *  toolbar. Use `<DropdownMenuItem>`, `<DropdownMenuLabel>`, etc. — same
+   *  primitives saved views uses. Pass any consumer-specific refresh /
+   *  export / clear / undo actions. When omitted, the trigger is hidden. */
+  moreActions?: ReactNode
+  /** Tailwind classes applied to the More trigger button. Use `"2xl:hidden"`
+   *  (default) to hide on wide screens where the consumer renders individual
+   *  buttons via the `toolbar` prop. Pass `""` for always-visible. */
+  moreActionsClassName?: string
+  /** Optional callback fired when any View-menu toggle changes. Useful when
+   *  the consumer needs to mirror a toggle to its own state (e.g. a `compact`
+   *  toggle that drives a column rebuild). Payload is a partial — only the
+   *  changed field is set. */
+  onViewOptionsChange?: (next: Partial<ViewOptions>) => void
   bulkActions?: (ctx: BulkActionCtx<T>) => ReactNode
   /** When provided, clicking a row opens a right-side Sheet drawer
    *  rendering the returned node. Overrides onRowClick. */
@@ -524,6 +539,9 @@ export function DataTable<T>({
   showGlobalFilter = true,
   showViewsMenu = true,
   showViewOptions = true,
+  moreActions,
+  moreActionsClassName = '2xl:hidden',
+  onViewOptionsChange,
   bulkActions,
   detailRenderer,
   enableColumnReorder = true,
@@ -1378,6 +1396,7 @@ export function DataTable<T>({
                 pinCountWhenEnabled={Math.max(stickyLeftCount, 1)}
                 onChange={(next) => {
                   setPrefs((p) => ({ ...p, viewOptions: { ...(p.viewOptions ?? {}), ...next } }))
+                  onViewOptionsChange?.(next)
                 }}
                 onCopyViewUrl={async () => {
                   // Encode current prefs → base64 URL param. Round-trips via
@@ -1392,6 +1411,19 @@ export function DataTable<T>({
                   }
                 }}
               />
+            )}
+            {moreActions && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="xs" variant="outline" className={cn('gap-1.5', moreActionsClassName)} title="More actions">
+                    <IcoMoreH size={11} /> More
+                    <IcoChevronDown size={10} className="text-[var(--text-muted)]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[200px] surface-float">
+                  {moreActions}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>

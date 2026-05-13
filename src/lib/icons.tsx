@@ -21,4 +21,5 @@ export {
   RotateCcw as IcoRotateCcw,
   Eye as IcoEye,
   Link as IcoLink,
+  MoreHorizontal as IcoMoreH,
 } from 'lucide-react'
