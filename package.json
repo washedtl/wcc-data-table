@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "playground": "vite playground"
+    "playground": "vite playground",
+    "build-registry": "node scripts/build-registry.mjs"
   },
   "peerDependencies": {
     "react": ">=18",

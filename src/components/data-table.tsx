@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type JSX, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type ReactNode } from 'react'
+import { deriveBulkCtx } from './data-table-bulk-ctx'
 import {
   flexRender,
   getCoreRowModel,
@@ -71,22 +72,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import {
-  IcoFilter,
-  IcoChevronDown,
-  IcoClose,
-  IcoPlus,
-  IcoPin,
-  IcoPinOff,
-  IcoGripVertical,
-  IcoColumns,
-  IcoBookmark,
-  IcoRotateCw,
-  IcoRotateCcw,
-  IcoEye,
-  IcoLink,
-  IcoMoreH,
-} from '@/lib/icons'
+import { IcoFilter, IcoChevronDown, IcoClose, IcoPlus } from '@/lib/icons'
 import { useTablePrefs, encodeTablePrefs, type TableDensity, type SavedView, type ViewOptions } from '@/hooks/use-table-prefs'
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -236,7 +222,7 @@ export function pinColumn<T>(): ColumnDef<T, unknown> {
       if (pinnedCount === 0) {
         return (
           <span aria-label="Pin" title="Pin rows — click any row's pin icon to keep it at the top" className="inline-flex items-center justify-center w-5 h-5 text-[var(--text-muted)]">
-            <IcoPin size={12} />
+            <i className="ph-bold ph-push-pin" style={{ fontSize: 12 }} />
           </span>
         )
       }
@@ -252,7 +238,7 @@ export function pinColumn<T>(): ColumnDef<T, unknown> {
           title={`Clear ${pinnedCount} pinned row${pinnedCount === 1 ? '' : 's'}`}
           aria-label={`Clear ${pinnedCount} pinned row${pinnedCount === 1 ? '' : 's'}`}
         >
-          <IcoPinOff size={12} />
+          <i className="ph-bold ph-push-pin-fill" style={{ fontSize: 12 }} />
           <span className="mono text-[9.5px] font-semibold leading-none">{pinnedCount}</span>
         </button>
       )
@@ -281,7 +267,10 @@ export function pinColumn<T>(): ColumnDef<T, unknown> {
             title={pinned ? 'Unpin row' : 'Pin row to top'}
             aria-pressed={!!pinned}
           >
-            {pinned ? <IcoPinOff size={12} /> : <IcoPin size={12} />}
+            <i
+              className={pinned ? 'ph-bold ph-push-pin-fill' : 'ph-bold ph-push-pin'}
+              style={{ fontSize: 12 }}
+            />
           </button>
         </span>
       )
@@ -383,23 +372,24 @@ export interface DataTableProps<T> {
   showDensityToggle?: boolean
   showGlobalFilter?: boolean
   showViewsMenu?: boolean
-  /** Render the View dropdown (compact/zebra/grid-lines/pin-cols/copy-url) in
-   *  the toolbar. The toggle states are persisted in `prefs.viewOptions` and
-   *  round-trip with saved views. Default true. */
+  /** Render the View dropdown (Compact / Zebra / Grid lines / Pin first columns
+   *  / Copy view URL) in the toolbar. Toggle states persist in
+   *  `prefs.viewOptions` and round-trip with saved views + `?view=` URLs.
+   *  Default true. */
   showViewOptions?: boolean
   /** Optional menu items rendered inside a "More" dropdown trigger in the
    *  toolbar. Use `<DropdownMenuItem>`, `<DropdownMenuLabel>`, etc. — same
-   *  primitives saved views uses. Pass any consumer-specific refresh /
-   *  export / clear / undo actions. When omitted, the trigger is hidden. */
+   *  primitives saved views uses. Pass through any consumer-specific
+   *  refresh/export/clear/undo actions. When omitted, the trigger is hidden. */
   moreActions?: ReactNode
   /** Tailwind classes applied to the More trigger button. Use `"2xl:hidden"`
-   *  (default) to hide on wide screens where the consumer renders individual
-   *  buttons via the `toolbar` prop. Pass `""` for always-visible. */
+   *  (default) to hide the dropdown on wide screens where the consumer
+   *  renders individual buttons elsewhere. Pass `""` for always-visible. */
   moreActionsClassName?: string
   /** Optional callback fired when any View-menu toggle changes. Useful when
-   *  the consumer needs to mirror a toggle to its own state (e.g. a `compact`
-   *  toggle that drives a column rebuild). Payload is a partial — only the
-   *  changed field is set. */
+   *  the consumer needs to mirror a toggle to its own state (e.g. SAS's
+   *  `compact` drives a column rebuild for ProductCell density). The
+   *  payload is a partial — only the changed field is set. */
   onViewOptionsChange?: (next: Partial<ViewOptions>) => void
   bulkActions?: (ctx: BulkActionCtx<T>) => ReactNode
   /** When provided, clicking a row opens a right-side Sheet drawer
@@ -453,17 +443,30 @@ export interface DataTableProps<T> {
    *  which scopes --surface→--bg on the table region) — without this the
    *  chrome blends into the body. Off by default. */
   liftedHeader?: boolean
+  /** Toast / snackbar callback for transient user feedback fired by
+   *  built-in shortcuts (e.g. "Copied N IDs" after Ctrl+C on a selection,
+   *  "View URL copied" from the Share menu). Wire to your toast lib
+   *  (sonner, react-hot-toast, etc.) or a custom snackbar. If omitted,
+   *  the events fire silently. */
+  onNotify?: (message: string, kind: 'success' | 'error' | 'info') => void
   /** Escape hatch for caller-defined keyboard commands. Fires for keys
    *  DataTable doesn't handle itself; the caller can read `cmd` (a stable
-   *  string identifier) and act on the focused row / visible rows. Used by
-   *  SAS batch for "f" (jump to next strong lead), "F" (cycle filter
-   *  preset), and "o"/"O" (open Amazon / Single-ASIN view). */
+   *  string identifier) and act on the focused row / selected rows /
+   *  visible rows. Used by SAS batch for "o"/"O" (open Amazon / Single-
+   *  ASIN view), "c" (copy), "t"/"b"/"a" (Send to Tempo/Blaze/FA), "r"
+   *  (refresh), "?" (show shortcuts cheat-sheet). The handler should
+   *  prefer `selectedRows` when non-empty, else fall back to `focusedRow`
+   *  alone — mirrors the right-click context menu's selection model. */
   onKeyboardCommand?: (
     cmd: string,
     ctx: {
       focusedRow: T | null
       focusedIndex: number | null
       visibleRows: T[]
+      /** Rows currently selected via the checkbox column. Empty array if
+       *  no rows are selected. Single-row commands should fall back to
+       *  `[focusedRow]` when this is empty. */
+      selectedRows: T[]
       setFocusedIndex: (i: number | null) => void
       e: React.KeyboardEvent<HTMLDivElement>
     }
@@ -497,11 +500,6 @@ export interface DataTableProps<T> {
    *  Single-row-only actions (open links, edit a single field) should hide
    *  themselves when `selected.length > 1`. */
   rowContextMenu?: (ctx: RowContextMenuCtx<T>) => ReactNode
-  /** Optional notification sink. Called for transient user feedback (e.g.
-   *  "Copied N IDs" after Ctrl+C on a selection). Wire to your toast lib
-   *  (sonner, react-hot-toast, etc.) or a custom snackbar. If omitted,
-   *  feedback is silently dropped. */
-  onNotify?: (message: string, kind: 'success' | 'error' | 'info') => void
 }
 
 export interface RowContextMenuCtx<T> {
@@ -557,11 +555,11 @@ export function DataTable<T>({
   liftedHeader = false,
   stickyLeftCount = 0,
   rowContextMenu,
+  onNotify,
   onKeyboardCommand,
   onRowDoubleClick,
   onRowMiddleClick,
   findBarEnabled = true,
-  onNotify,
 }: DataTableProps<T>) {
   const initialOrder = useMemo(
     () => columns.map((c, i) => c.id ?? `__col_${i}`) as ColumnOrderState,
@@ -855,7 +853,26 @@ export function DataTable<T>({
     [table, rowSelection] // eslint-disable-line react-hooks/exhaustive-deps
   )
   const selectedCount = selectedRows.length
-  const clearSelection = () => table.resetRowSelection()
+  // useCallback so the reference passed into bulkActions(ctx).clear is stable
+  // across renders — consumers wrap it in their own useCallback/useMemo, so an
+  // unstable identity breaks downstream memoization. table is stable across
+  // renders (returned from useReactTable).
+  const clearSelection = useCallback(() => table.resetRowSelection(), [table])
+  // Cache the last non-zero bulk-actions context so the 200ms slide-out
+  // animation has buttons to render during the exit frame. Without this,
+  // gating the render on `selectedCount > 0` (M1) caused the bar to slide
+  // out as an empty shell. The cache is updated post-commit in a useEffect
+  // — never mutate refs during render under React 19 concurrent / StrictMode.
+  // The render reads from `bulkCtx` below, which uses live state when
+  // selectedCount > 0 (so the bar doesn't flash empty for one frame on
+  // first selection) and falls back to the cached ctx during exit.
+  const lastBulkCtxRef = useRef<{ selected: T[]; count: number }>({ selected: [], count: 0 })
+  useEffect(() => {
+    if (selectedCount > 0) {
+      lastBulkCtxRef.current = { selected: selectedRows, count: selectedCount }
+    }
+  }, [selectedCount, selectedRows])
+  const bulkCtx = deriveBulkCtx(selectedRows, selectedCount, lastBulkCtxRef.current)
 
   // Per-row context-menu content factory. Computes the selection-aware ctx —
   // when the right-clicked row IS part of the active multi-select, the menu
@@ -1140,11 +1157,14 @@ export function DataTable<T>({
 
     // Domain-specific commands — dispatch to caller. The caller decides
     // whether to consume the key (e.preventDefault inside its handler).
-    if (onKeyboardCommand && /^[a-zA-Z]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    // `?` is allowed alongside a-zA-Z so callers can show a shortcuts
+    // cheat-sheet (universal convention in vim / GitHub / Linear / Notion).
+    if (onKeyboardCommand && /^[a-zA-Z?]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
       onKeyboardCommand(e.key, {
         focusedRow: row.original as T,
         focusedIndex: focusedRowIndex,
         visibleRows: visibleRows.map(r => r.original as T),
+        selectedRows: visibleRows.filter(r => r.getIsSelected()).map(r => r.original as T),
         setFocusedIndex: (i) => setFocusedRowIndex(i),
         e,
       })
@@ -1296,10 +1316,10 @@ export function DataTable<T>({
                 are selected. Clicking "Clear" wipes the selection (same as
                 Esc). Sits at the start of the right cluster so it reads
                 before view/density/columns chrome. */}
-            {Object.keys(rowSelection).length > 0 && (
+            {selectedCount > 0 && (
               <button
                 type="button"
-                onClick={() => table.resetRowSelection()}
+                onClick={clearSelection}
                 title="Clear selection (Esc)"
                 className={cn(
                   // 40x40 hit-area extension via ::before — visible chip is
@@ -1317,7 +1337,7 @@ export function DataTable<T>({
                   'before:h-10 before:content-[""] before:-z-10',
                 )}
               >
-                <span className="font-semibold">{Object.keys(rowSelection).length}</span>
+                <span className="font-semibold">{selectedCount}</span>
                 <span className="text-[var(--text-dim)]">selected</span>
                 <span aria-hidden className="text-[var(--text-muted)]">·</span>
                 <span className="uppercase tracking-[0.06em] text-[10px]">Clear</span>
@@ -1399,18 +1419,12 @@ export function DataTable<T>({
                   gridLines: effectiveGridLines,
                   pinFirstColumns: effectivePinCount,
                 }}
-                // When the user toggles "Pin first columns" on, use the
-                // consumer's specified `stickyLeftCount` prop (default 0 → 1).
-                // This way callers who set `stickyLeftCount={3}` get 3 columns
-                // pinned when toggled on, and the menu just owns the on/off.
                 pinCountWhenEnabled={Math.max(stickyLeftCount, 1)}
                 onChange={(next) => {
                   setPrefs((p) => ({ ...p, viewOptions: { ...(p.viewOptions ?? {}), ...next } }))
                   onViewOptionsChange?.(next)
                 }}
                 onCopyViewUrl={async () => {
-                  // Encode current prefs → base64 URL param. Round-trips via
-                  // applyViewFromUrl() on the receiver's mount.
                   try {
                     const encoded = encodeTablePrefs(prefs)
                     const url = `${window.location.origin}${window.location.pathname}?view=${encoded}`
@@ -1426,7 +1440,7 @@ export function DataTable<T>({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="xs" variant="outline" className={cn('gap-1.5', moreActionsClassName)} title="More actions">
-                    <IcoMoreH size={11} /> More
+                    <i className="ph-bold ph-dots-three" /> More
                     <IcoChevronDown size={10} className="text-[var(--text-muted)]" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1449,6 +1463,12 @@ export function DataTable<T>({
         {bulkActions && (
           <div
             aria-hidden={selectedCount === 0 ? 'true' : undefined}
+            // M4 — `inert` (native attribute) cleanly removes the wrapper +
+            // descendants from focus order + AT tree during the slide-out
+            // animation, complementing the M1 render gate below. Without
+            // this, an aria-hidden wrapper with still-focusable children
+            // would violate axe `aria-hidden-focus`.
+            inert={selectedCount === 0}
             className={cn(
               'absolute left-0 right-0 z-30 flex items-center gap-3 px-3 py-2',
               'bg-[color-mix(in_srgb,var(--accent)_18%,var(--surface-2))]',
@@ -1486,9 +1506,19 @@ export function DataTable<T>({
                 row when the available width is too small; `justify-end` keeps
                 them right-aligned in both single- and multi-row states. The
                 bar is `position:absolute` so growing taller is fine — it just
-                overlays a bit more of the underlying toolbar. */}
+                overlays a bit more of the underlying toolbar.
+
+                M1 — Render the bulk-actions buttons from the cached
+                last-non-zero ctx (lastBulkCtxRef) so the 200ms exit
+                animation has something to slide out. Gate the initial
+                render on lastBulkCtxRef.current.count > 0 so consumers
+                never see count=0 in their callback. */}
             <div className="flex flex-wrap items-center gap-1.5 min-w-0 justify-end">
-              {bulkActions({ selected: selectedRows, count: selectedCount, clear: clearSelection })}
+              {bulkCtx.count > 0 && bulkActions({
+                selected: bulkCtx.selected,
+                count: bulkCtx.count,
+                clear: clearSelection,
+              })}
             </div>
           </div>
         )}
@@ -1879,11 +1909,11 @@ function HeaderCell<T>({
     >
       <div className={cn('flex items-center gap-1.5', isNumeric && 'justify-end')}>
         {canDrag && (
-          // Faint at rest so the column doesn't look cluttered, but always
-          // visible so the user knows the header is draggable.
-          <IcoGripVertical
-            size={12}
-            className="opacity-30 group-hover/header:opacity-90 text-[var(--text-muted)] transition-opacity"
+          <i
+            // Faint at rest so the column doesn't look cluttered, but always
+            // visible so the user knows the header is draggable.
+            className="ph-bold ph-dots-six-vertical opacity-30 group-hover/header:opacity-90 text-[var(--text-muted)] transition-opacity"
+            style={{ fontSize: 12 }}
             aria-hidden
           />
         )}
@@ -2140,7 +2170,7 @@ function ColumnVisibilityMenu<T>({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="xs" className="gap-1.5">
-          <IcoColumns size={11} />
+          <i className="ph-bold ph-columns" style={{ fontSize: 11 }} />
           Columns
           <IcoChevronDown size={10} className="text-[var(--text-muted)]" />
         </Button>
@@ -2249,7 +2279,7 @@ function ViewOptionsMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="xs" className="gap-1.5" title="Table view options">
-          <IcoEye size={11} />
+          <i className="ph-bold ph-eye" />
           View
           <IcoChevronDown size={10} className="text-[var(--text-muted)]" />
         </Button>
@@ -2296,8 +2326,7 @@ function ViewOptionsMenu({
           onSelect={() => { void onCopyViewUrl() }}
           className="text-[12px]"
         >
-          <IcoLink size={11} className="mr-1.5" />
-          Copy view URL
+          <i className="ph-bold ph-link" /> Copy view URL
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -2329,7 +2358,7 @@ function ColumnFilterTrigger<T, V>({ column }: { column: Column<T, V> }) {
           )}
           title={active ? `Filter: ${value}` : 'Filter column'}
         >
-          <IcoFilter size={11} />
+          <i className="ph-bold ph-funnel" style={{ fontSize: 11 }} />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -2411,7 +2440,7 @@ function SavedViewsMenu({
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="xs" className="gap-1.5" title={activeViewDirty ? `${activeView} (unsaved changes)` : (activeView ?? 'Views')}>
-          <IcoBookmark size={11} />
+          <i className="ph-bold ph-bookmark-simple" style={{ fontSize: 11 }} />
           <span className="inline-flex items-center gap-1">
             {activeView ?? 'Views'}
             {activeViewDirty && (
@@ -2454,7 +2483,7 @@ function SavedViewsMenu({
               className="opacity-0 group-hover/view:opacity-100 text-[var(--text-muted)] hover:text-[var(--negative)]"
               aria-label={`Delete view ${v.name}`}
             >
-              <IcoClose size={11} />
+              <i className="ph-bold ph-x" style={{ fontSize: 11 }} />
             </button>
           </DropdownMenuItem>
         ))}
@@ -2469,14 +2498,14 @@ function SavedViewsMenu({
               onSelect={(e) => { e.preventDefault(); onUpdate(); setOpen(false) }}
               className="text-[12px] text-[var(--accent)]"
             >
-              <IcoRotateCw size={11} className="mr-1.5" />
+              <i className="ph-bold ph-arrow-clockwise mr-1.5" style={{ fontSize: 11 }} />
               Update “{activeView}”
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={(e) => { e.preventDefault(); onReset(); setOpen(false) }}
               className="text-[12px] text-[var(--text-dim)]"
             >
-              <IcoRotateCcw size={11} className="mr-1.5" />
+              <i className="ph-bold ph-arrow-counter-clockwise mr-1.5" style={{ fontSize: 11 }} />
               Reset to “{activeView}”
             </DropdownMenuItem>
           </>
