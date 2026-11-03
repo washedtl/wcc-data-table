@@ -2469,10 +2469,10 @@ function SavedViewsMenu({
             className="group/view flex items-center justify-between text-[12px]"
           >
             <span className={cn(activeView === v.name && 'text-[var(--accent)] font-semibold')}>
-              {activeView === v.name && <span className="mr-1">●</span>}
+              {activeView === v.name && <><i aria-hidden className="ph-bold ph-check mr-1" /><span className="sr-only">(current)</span></>}
               {v.name}
               {activeView === v.name && activeViewDirty && (
-                <span className="ml-1.5 text-[10px] text-[var(--warning)]" title="Unsaved changes">●</span>
+                <><span aria-hidden className="ml-1.5 inline-block size-1.5 rounded-full bg-[var(--warning)] align-middle" title="Unsaved changes" /><span className="sr-only">Unsaved changes</span></>
               )}
             </span>
             <button
